@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Vue.js SPAのサンプルアプリケーション</title></head>
+    <body><div id="app">
+        <router-link to="/top">トップページ</router-link>
+        <router-link to="/users">ユーザー一覧ページ</router-link>
+        <!-- :toはv-bind:toの省略記法。2.9.2「v-bindの省略記法」参照。 -->
+        <router-link :to="{ name: 'user', params: { userId: 123 }}">ユーザー詳細ページ</router-link>
+        <router-view></router-view>
+    </div>
+    <!-- Vue.js本体とVue Routerの読み込み -->
+    <script src="https://unpkg.com/vue@2.5.17"></script>
+    <script src="https://unpkg.com/vue-router@3.0.1"></script>
+    <script>
+        // ルートオプションを渡してルーターインスタンスを生成します
+        var router = new VueRouter({
+                                   // 各ルートにコンポーネントをマッピングします
+                                   // コンポーネントはVue.extend()によって作られたコンポーネントコンストラクタでも
+                                   // コンポーネントオプションのオブジェクトでも構いません
+                                   routes: [
+                                            {
+                                            path: '/',
+                                            component: {
+                                            template: '<div>アドレスバーのパスに/user/123と打ち込んでください。</div>'
+                                            }
+                                            },
+                                            {
+                                            path: '/top',
+                                            component: {
+                                            template: '<div>トップページです。</div>'
+                                            }
+                                            },
+                                            {
+                                            path: '/users',
+                                            component: {
+                                            template: '<div>ユーザー一覧ページです。</div>'
+                                            }
+                                            },
+                                            {
+                                            path: '/user/:userId',
+                                            name: 'user',
+                                            component: {
+                                            template: '<div>ユーザーIDは{{ $route.params.userId }}です。</div>'
+                                            }
+                                            }
+                                            ]
+                                   }) // ルーターのインスタンスをrootとなるVueインスタンスに渡します
+                                   var app = new Vue({
+                                                     router: router
+                                                     }).$mount('#app')
+        </script>
+    </body>
+</html>
+
