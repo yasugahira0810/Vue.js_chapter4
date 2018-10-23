@@ -8,6 +8,8 @@
         <router-link to="/users">ユーザー一覧ページ</router-link>
         <!-- :toはv-bind:toの省略記法。2.9.2「v-bindの省略記法」参照。 -->
         <router-link :to="{ name: 'user', params: { userId: 123 }}">ユーザー詳細ページ</router-link>
+        <router-link to="/global_fook">グローバルフックでリダレクト</router-link>
+        <router-link to="/global_fook2">グローバルフックで無限ループ</router-link>
         <router-view></router-view>
     </div>
     <!-- Vue.js本体とVue Routerの読み込み -->
@@ -44,12 +46,37 @@
                                             component: {
                                             template: '<div>ユーザーIDは{{ $route.params.userId }}です。</div>'
                                             }
+                                            },
+                                            {
+                                            path: '/global_fook',
+                                            component: {
+                                            template: '<div>グローバルフックでリダイレクトするからここは見れない</div>'
+                                            }
+                                            },
+                                            {
+                                            path: '/global_fook2',
+                                            component: {
+                                            template: '<div>グローバルフックで無限ループ</div>'
+                                            }
                                             }
                                             ]
-                                   }) // ルーターのインスタンスをrootとなるVueインスタンスに渡します
-                                   var app = new Vue({
-                                                     router: router
-                                                     }).$mount('#app')
+                                   })
+                                   router.beforeEach( function (to, from, next) {
+                                                     // global_fookへアクセスした時に/topへリダイレクトする例
+                                                     if (to.path === '/global_fook') {
+                                                     next('/top')
+                                                     } else if (to.path === '/global_fook2') {
+                                                     console.log('a')
+                                                     } else {
+                                                     // 引数なしでnextを呼び出すと通常通りの遷移が行われる
+                                                     next()
+                                                     }
+                                                     })
+                                                     
+                                                     // ルーターのインスタンスをrootとなるVueインスタンスに渡します
+                                                     var app = new Vue({
+                                                                       router: router
+                                                                       }).$mount('#app')
         </script>
     </body>
 </html>
