@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Vue.js SPAのサンプルアプリケーション</title></head>
-    <body><div id="app">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Vue.js SPAのサンプルアプリケーション</title>
+</head>
+
+<body>
+    <div id="app">
         <router-link to="/top">トップページ</router-link>
         <router-link to="/users">ユーザー一覧ページ</router-link>
         <!-- :toはv-bind:toの省略記法。2.9.2「v-bindの省略記法」参照。 -->
@@ -18,66 +22,66 @@
     <script>
         // ルートオプションを渡してルーターインスタンスを生成します
         var router = new VueRouter({
-                                   // 各ルートにコンポーネントをマッピングします
-                                   // コンポーネントはVue.extend()によって作られたコンポーネントコンストラクタでも
-                                   // コンポーネントオプションのオブジェクトでも構いません
-                                   routes: [
-                                            {
-                                            path: '/',
-                                            component: {
-                                            template: '<div>アドレスバーのパスに/user/123と打ち込んでください。</div>'
-                                            }
-                                            },
-                                            {
-                                            path: '/top',
-                                            component: {
-                                            template: '<div>トップページです。</div>'
-                                            }
-                                            },
-                                            {
-                                            path: '/users',
-                                            component: {
-                                            template: '<div>ユーザー一覧ページです。</div>'
-                                            }
-                                            },
-                                            {
-                                            path: '/user/:userId',
-                                            name: 'user',
-                                            component: {
-                                            template: '<div>ユーザーIDは{{ $route.params.userId }}です。</div>'
-                                            }
-                                            },
-                                            {
-                                            path: '/global_fook',
-                                            component: {
-                                            template: '<div>グローバルフックでリダイレクトするからここは見れない</div>'
-                                            }
-                                            },
-                                            {
-                                            path: '/global_fook2',
-                                            component: {
-                                            template: '<div>グローバルフックで無限ループ</div>'
-                                            }
-                                            }
-                                            ]
-                                   })
-                                   router.beforeEach( function (to, from, next) {
-                                                     // global_fookへアクセスした時に/topへリダイレクトする例
-                                                     if (to.path === '/global_fook') {
-                                                     next('/top')
-                                                     } else if (to.path === '/global_fook2') {
-                                                     console.log('a')
-                                                     } else {
-                                                     // 引数なしでnextを呼び出すと通常通りの遷移が行われる
-                                                     next()
-                                                     }
-                                                     })
-                                                     
-                                                     // ルーターのインスタンスをrootとなるVueインスタンスに渡します
-                                                     var app = new Vue({
-                                                                       router: router
-                                                                       }).$mount('#app')
-        </script>
-    </body>
-</html>
+            // 各ルートにコンポーネントをマッピングします
+            // コンポーネントはVue.extend()によって作られたコンポーネントコンストラクタでも
+            // コンポーネントオプションのオブジェクトでも構いません
+            routes: [
+                {
+                    path: '/',
+                    component: {
+                        template: '<div>アドレスバーのパスに/user/123と打ち込んでください。</div>'
+                    }
+                },
+                {
+                    path: '/top',
+                    component: {
+                        template: '<div>トップページです。</div>'
+                    }
+                },
+                {
+                    path: '/users',
+                    component: {
+                        template: '<div>ユーザー一覧ページです。</div>'
+                    }
+                },
+                {
+                    path: '/user/:userId',
+                    name: 'user',
+                    component: {
+                        template: '<div>ユーザーIDは{{ $route.params.userId }}です。</div>'
+                    }
+                },
+                {
+                    path: '/global_fook',
+                    component: {
+                        template: '<div>グローバルフックでリダイレクトするからここは見れない</div>'
+                    }
+                },
+                {
+                    path: '/global_fook2',
+                    component: {
+                        template: '<div>グローバルフックで無限ループ</div>'
+                    }
+                }
+            ]
+        })
+        router.beforeEach(function (to, from, next) {
+            // global_fookへアクセスした時に/topへリダイレクトする例
+            if (to.path === '/global_fook') {
+                next('/top')
+            } else if (to.path === '/global_fook2') {
+                console.log('a')
+            } else {
+                // 引数なしでnextを呼び出すと通常通りの遷移が行われる
+                next()
+            }
+        })
 
+        // ルーターのインスタンスをrootとなるVueインスタンスに渡します
+        var app = new Vue({
+            router: router
+        }).$mount('#app')
+    </script>
+</body>
+
+</html>
