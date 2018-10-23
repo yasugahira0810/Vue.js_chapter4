@@ -12,14 +12,63 @@
         <router-link to="/users">ユーザー一覧ページ</router-link>
         <!-- :toはv-bind:toの省略記法。2.9.2「v-bindの省略記法」参照。 -->
         <router-link :to="{ name: 'user', params: { userId: 123 }}">ユーザー詳細ページ</router-link>
-        <router-link to="/global_fook">グローバルフックでリダレクト</router-link>
-        <router-link to="/global_fook2">グローバルフックで無限ループ</router-link>
+        <router-link to="/global_hook">グローバルフックでリダレクト</router-link>
+        <router-link to="/global_hook2">グローバルフックで無限ループ</router-link>
+        <router-link to="/component_hook">コンポーネント内のフック</router-link>
         <router-view></router-view>
     </div>
     <!-- Vue.js本体とVue Routerの読み込み -->
     <script src="https://unpkg.com/vue@2.5.17"></script>
     <script src="https://unpkg.com/vue-router@3.0.1"></script>
     <script>
+
+    // ダミーデータの定義。本来はデータベースの情報をAPI経由で取得する
+    var userData = [
+      {
+        id: 1,
+        name: 'Takuya Tejima',
+        description: '東南アジアで働くエンジニアです。'
+      },
+      {
+        id: 2,
+        name: 'Yohei Noda',
+        description: 'アウトドア・フットサルが趣味のエンジニアです。'
+      }
+    ]
+
+        // 擬似的にAPI経由で情報を取得したようにする
+        var getUsers = function (callback) {
+            setTimeout(function () {
+                callback(null, userData)
+            }, 1000)
+        }
+
+        var UserList = {
+            template: '#user-list',
+            data: function () {
+                return {
+                    loading: false,
+                    users: function () { return [] },
+                    error: null
+                }
+            },
+
+            // 「ページ遷移が行われて、コンポーネントが初期化される前」に呼び出される
+            beforeRouteEnter: function (to, from, next) {
+                getUsers((function (err, users) {
+                    if (err) {
+                        console.log('呼ばれだでござる１')
+                        this.error = err.toString()
+                    } else {
+                        console.log('呼ばれだでござる２')
+                        // nextに渡すcallbackでコンポーネント自身にアクセス可
+                        next(function (vm) { vm.users = users })
+                    }
+                }).bind(this))
+            }
+        }
+
+
         // ルートオプションを渡してルーターインスタンスを生成します
         var router = new VueRouter({
             // 各ルートにコンポーネントをマッピングします
@@ -42,6 +91,15 @@
                     path: '/users',
                     component: {
                         template: '<div>ユーザー一覧ページです。</div>'
+                    },
+                    beforeEnter: function (to, from, next) {
+                        // /users?redirect=trueでアクセスされた時だけtopにリダイレクトするフック関数を追加
+                        if (to.query.redirect === 'true') {
+                            console.log('ルート単位のフック呼ばれてるよ〜')
+                            next('/top')
+                        } else {
+                            next()
+                        }
                     }
                 },
                 {
@@ -52,24 +110,30 @@
                     }
                 },
                 {
-                    path: '/global_fook',
+                    path: '/global_hook',
                     component: {
                         template: '<div>グローバルフックでリダイレクトするからここは見れない</div>'
                     }
                 },
                 {
-                    path: '/global_fook2',
+                    path: '/global_hook2',
                     component: {
                         template: '<div>グローバルフックで無限ループ</div>'
                     }
+                },
+                {
+                    path: '/component_hook',
+                    component: UserList
                 }
+
             ]
         })
+
         router.beforeEach(function (to, from, next) {
-            // global_fookへアクセスした時に/topへリダイレクトする例
-            if (to.path === '/global_fook') {
+            // global_hookへアクセスした時に/topへリダイレクトする例
+            if (to.path === '/global_hook') {
                 next('/top')
-            } else if (to.path === '/global_fook2') {
+            } else if (to.path === '/global_hook2') {
                 console.log('a')
             } else {
                 // 引数なしでnextを呼び出すと通常通りの遷移が行われる
@@ -81,6 +145,18 @@
         var app = new Vue({
             router: router
         }).$mount('#app')
+    </script>
+    <!-- ユーザー一覧ページのテンプレート -->
+    <script type="text/x-template" id="user-list">
+        <div>
+            <div class="loading" v-if="loading">読み込み中...</div>
+            <div v-if="error" class="error">
+                {{ error }}
+            </div>
+            <div v-for="user in users" :key="user.id">
+                <router-link :to="{ path: '/users/' + user.id }">{{ user.name }}</router-link>
+            </div>
+        </div>
     </script>
 </body>
 
