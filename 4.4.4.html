@@ -8,6 +8,7 @@
         <!-- router-linkによるナビゲーション定義 -->
         <router-link to="/top">トップページ</router-link>
         <router-link to="/users"> ユーザー一覧ページ</router-link>
+        <router-link to="/users/new">新規ユーザー登録</router-link>
     </nav>
     <router-view></router-view>
 </div>
@@ -39,6 +40,30 @@
         <div v-if="user">
             <h2>{{ user.name }}</h2>
             <p>{{ user.description }}</p>
+        </div>
+    </div>
+</script>
+
+<!-- ユーザー 作成 ページ の テンプレート -->
+<script type="text/x-template" id="user-create">
+    <div>
+        <div class="sending" v-if="sending">Sending...</div>
+        <div>
+            <h2>新規ユーザー作成</h2>
+            <div>
+                <label>名前:</label>
+                <input type="text" v-model="user.name">
+            </div>
+            <div>
+                <label>説明文: </label>
+                <textarea v-model="user.description"></textarea>
+            </div>
+            <div v-if="error" class="error">
+                {{ error }}
+            </div>
+            <div>
+                <input type="button" @click="createUser" value="送信">
+            </div>
         </div>
     </div>
 </script>
@@ -161,6 +186,68 @@
         }
     }
 
+    // 擬似的にAPI経由で情報を更新したようにする
+    // 実際のWebアプリケーションではServerへPOSTリクエストを行う
+    var postUser = function (params, callback) {
+        setTimeout(function () {
+            // idは追加されるごとに自動的にincrementされていく
+            params.id = userData.length + 1
+            userData.push(params)
+            callback(null, params)
+        }, 1000)
+    }
+
+    // 新規ユーザー作成コンポーネント
+    var UserCreate = {
+        template: '#user-create',
+        data: function () {
+            return {
+                sending: false,
+                user: this.defaultUser(),
+                error: null
+            }
+        },
+
+        created: function () {
+        },
+
+        methods: {
+            defaultUser: function () {
+                return {
+                    name: '',
+                    description: ''
+                }
+            },
+
+            createUser: function () {
+                // 入力パラメーターのバリデーション
+                if (this.user.name.trim() === '') {
+                    this.error = 'Nameは必須です'
+                    return
+                }
+                if (this.user.description.trim() === '') {
+                    this.error = 'Descriptionは必須です'
+                    return
+                }
+                postUser(this.user, (function (err, user) {
+                    this.sending = false
+                    if (err) {
+                        this.error = err.toString()
+                    } else {
+                        this.error = null
+                        // デフォルトでフォームをリセット
+                        this.user = this.defaultUser()
+                        alert('新規ユーザーが登録されました')
+                        // ユーザー一覧ページに戻る
+                        this.$router.push('/users')
+                    }
+                }).bind(this))
+            }
+        }
+    }
+
+
+
     var router = new VueRouter({
         routes: [
             {
@@ -172,6 +259,10 @@
             {
                 path: '/users',
                 component: UserList
+            },
+            { // ルート定義を追加
+                path: '/users/new',
+                component: UserCreate
             },
             { // ルート定義の追加
                 path: '/users/:userId',
