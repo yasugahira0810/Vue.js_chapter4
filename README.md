@@ -100,11 +100,13 @@
 
 ## 4.4 サンプルアプリケーションの実装
 
-[コード](./4.4.0.html)
+[コード](4.4.0.html)
+[動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.0.html)
 
 ### 4.4.1 リストページの実装
 
 [コード](./4.4.1.html)
+[動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.1.html)
 
 ### 4.4.2 APIによるデータ通信
 
