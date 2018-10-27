@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset ="UTF-8">
-        <title>Vue.js SPAのサンプルアプリケーション</title></head>
-    <body><div id ="app">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Vue.js SPAのサンプルアプリケーション</title>
+</head>
+
+<body>
+    <div id="app">
         <router-link to="/top">トップページ</router-link>
         <router-link to="/users">ユーザー一覧ページ</router-link>
         <router-view></router-view>
@@ -14,28 +18,28 @@
     <script>
         // ルートオプションを渡してルーターインスタンスを生成します
         var router = new VueRouter({
-                                   // 各ルートにコンポーネントをマッピングします
-                                   // コンポーネントはVue.extend()によって作られたコンポーネントコンストラクタでも
-                                   // コンポーネントオプションのオブジェクトでも構いません
-                                   routes: [
-                                            {
-                                            path: '/top',
-                                            component: {
-                                            template: '<div>トップページです。</div>'
-                                            }
-                                            },
-                                            {
-                                            path: '/users',
-                                            component: {
-                                            template: '<div>ユーザー一覧ページです。</div>'
-                                            }
-                                            }
-                                            ]
-                                   }) // ルーターのインスタンスをrootとなるVueインスタンスに渡します
-                                   var app = new Vue({
-                                                     router: router
-                                                     }).$mount('#app')
-        </script>
-    </body>
-</html>
+            // 各ルートにコンポーネントをマッピングします
+            // コンポーネントはVue.extend()によって作られたコンポーネントコンストラクタでも
+            // コンポーネントオプションのオブジェクトでも構いません
+            routes: [
+                {
+                    path: '/top',
+                    component: {
+                        template: '<div>トップページです。</div>'
+                    }
+                },
+                {
+                    path: '/users',
+                    component: {
+                        template: '<div>ユーザー一覧ページです。</div>'
+                    }
+                }
+            ]
+        }) // ルーターのインスタンスをrootとなるVueインスタンスに渡します
+        var app = new Vue({
+            router: router
+        }).$mount('#app')
+    </script>
+</body>
 
+</html>
