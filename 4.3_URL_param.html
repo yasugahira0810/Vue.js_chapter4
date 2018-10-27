@@ -12,7 +12,7 @@
         <router-link to="/users">ユーザー一覧ページ</router-link>
         <!-- :toはv-bind:toの省略記法。2.9.2「v-bindの省略記法」参照。 -->
         <router-link :to="{ name: 'user', params: { userId: 123 }}">ユーザー詳細ページ</router-link>
-        <router-link to="/global_hook">グローßバルフックでリダレクト</router-link>
+        <router-link to="/global_hook">グローバルフックでリダレクト</router-link>
         <router-link to="/global_hook2">グローバルフックで無限ループ</router-link>
         <router-link to="/component_hook">コンポーネント内のフック</router-link>
         <router-view></router-view>
@@ -57,10 +57,10 @@
             beforeRouteEnter: function (to, from, next) {
                 getUsers((function (err, users) {
                     if (err) {
-                        console.log('呼ばれだでござる１')
+                        console.log('呼ばれたでござる１')
                         this.error = err.toString()
                     } else {
-                        console.log('呼ばれだでござる２')
+                        console.log('呼ばれたでござる２')
                         // nextに渡すcallbackでコンポーネント自身にアクセス可
                         next(function (vm) { vm.users = users })
                     }
@@ -75,12 +75,6 @@
             // コンポーネントはVue.extend()によって作られたコンポーネントコンストラクタでも
             // コンポーネントオプションのオブジェクトでも構いません
             routes: [
-                {
-                    path: '/',
-                    component: {
-                        template: '<div>アドレスバーのパスに/user/123と打ち込んでください。</div>'
-                    }
-                },
                 {
                     path: '/top',
                     component: {
