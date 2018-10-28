@@ -12,9 +12,9 @@
         <router-link to="/users">ユーザー一覧ページ</router-link>
         <!-- :toはv-bind:toの省略記法。2.9.2「v-bindの省略記法」参照。 -->
         <router-link :to="{ name: 'user', params: { userId: 123 }}">ユーザー詳細ページ</router-link>
-        <router-link to="/global_hook">グローバルフックでリダレクト</router-link>
-        <router-link to="/global_hook2">グローバルフックで無限ループ</router-link>
-        <router-link to="/component_hook">コンポーネント内のフック</router-link>
+        <router-link to="/global_hook">グローバルのフック関数</router-link>
+        <router-link to="/route_hook">ルート単位のフック関数</router-link>
+        <router-link to="/component_hook">コンポーネント内のフック関数</router-link>
         <router-view></router-view>
     </div>
     <!-- Vue.js本体とVue Routerの読み込み -->
@@ -55,12 +55,11 @@
 
             // 「ページ遷移が行われて、コンポーネントが初期化される前」に呼び出される
             beforeRouteEnter: function (to, from, next) {
+                console.log('コンポーネント内のフック関数が呼ばれたよ！' + 'from: "' + from.path + '", to: "' + to.path + '"')
                 getUsers((function (err, users) {
                     if (err) {
-                        console.log('呼ばれたでござる１')
                         this.error = err.toString()
                     } else {
-                        console.log('呼ばれたでござる２')
                         // nextに渡すcallbackでコンポーネント自身にアクセス可
                         next(function (vm) { vm.users = users })
                     }
@@ -86,15 +85,6 @@
                     component: {
                         template: '<div>ユーザー一覧ページです。</div>'
                     },
-                    beforeEnter: function (to, from, next) {
-                        // /users?redirect=trueでアクセスされた時だけtopにリダイレクトするフック関数を追加
-                        if (to.query.redirect === 'true') {
-                            console.log('ルート単位のフック呼ばれてるよ〜')
-                            next('/top')
-                        } else {
-                            next()
-                        }
-                    }
                 },
                 {
                     path: '/user/:userId',
@@ -106,13 +96,22 @@
                 {
                     path: '/global_hook',
                     component: {
-                        template: '<div>グローバルフックでリダイレクトするからここは見れない</div>'
+                        template: '<div>グローバルのフック関数でリダイレクトするからここは見れない</div>'
                     }
                 },
                 {
-                    path: '/global_hook2',
+                    path: '/route_hook',
                     component: {
-                        template: '<div>グローバルフックで無限ループ</div>'
+                        template: '<div>route_hook?redirect=trueでアクセスするとルート単位のフック関数によりtopへリダイレクトされるよ</div>'
+                    },
+                    beforeEnter: function (to, from, next) {
+                        // /route_hook?redirect=trueでアクセスされた時だけtopにリダイレクトするフック関数を追加
+                        if (to.query.redirect === 'true') {
+                            console.log('ルート単位のフック関数が呼ばれたよ！')
+                            next('/top')
+                        } else {
+                            next()
+                        }
                     }
                 },
                 {
@@ -124,11 +123,10 @@
         })
 
         router.beforeEach(function (to, from, next) {
+            console.log('グローバルのフック関数が呼ばれたよ！' + 'from: "' + from.path + '", to: "' + to.path + '"')
             // global_hookへアクセスした時に/topへリダイレクトする例
             if (to.path === '/global_hook') {
                 next('/top')
-            } else if (to.path === '/global_hook2') {
-                console.log('a')
             } else {
                 // 引数なしでnextを呼び出すと通常通りの遷移が行われる
                 next()

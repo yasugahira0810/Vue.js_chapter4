@@ -106,67 +106,149 @@ router.push({ name: 'user', params: { userId: 456 }})
 
 ### 4.3.4 フック関数
 
+- Vue Routerでは、ページ遷移が実行される前後に処理を追加できるフック関数が3種類提供されている。
+  + グローバルのフック関数
+  + ルート単位のフック関数
+  + コンポーネント内のフック関数
+
+#### グローバルのフック関数
+
+- 全てのページ遷移に対して設定できるフック関数
+- router.beforeEachに関数をセットすると、ページ遷移が起こる直前にその関数が実行される
+- *テキストを参考にした以下のコードで、ログ出力&リダイレクトを確認する。*
+
+```
+        router.beforeEach(function (to, from, next) {
+            console.log('グローバルのフック関数が呼ばれたよ！' + 'from: "' + from.path + '", to: "' + to.path + '"')
+            // global_hookへアクセスした時に/topへリダイレクトする例
+            if (to.path === '/global_hook') {
+                next('/top')
+            } else {
+                // 引数なしでnextを呼び出すと通常通りの遷移が行われる
+                next()
+            }
+        })
+
+```
+
+#### ルート単位のフック関数
+
+- Vue Router初期化時のルート定義において、beforeEnterオプションを設定することで、ルート単位でフックを追加することができる
+- *テキストを参考にした以下のコードでログ出力&リダイレクトを確認する。*
+
+```
+                {
+                    path: '/route_hook',
+                    component: {
+                        template: '<div>route_hook?redirect=trueでアクセスするとルート単位のフック関数によりtopへリダイレクトされるよ</div>'
+                    },
+                    beforeEnter: function (to, from, next) {
+                        // /route_hook?redirect=trueでアクセスされた時だけtopにリダイレクトするフック関数を追加
+                        if (to.query.redirect === 'true') {
+                            console.log('ルート単位のフック関数が呼ばれたよ！')
+                            next('/top')
+                        } else {
+                            next()
+                        }
+                    }
+                },
+```
+
+
+#### コンポーネント内のフック関数
+
+- ルート定義時ではなく、コンポーネント側でフック関数を定義することもできる
+- *テキストを参考にした以下のコードでログ出力を確認する。*
+
+```
+        var UserList = {
+            template: '#user-list',
+            data: function () {
+                return {
+                    loading: false,
+                    users: function () { return [] },
+                    error: null
+                }
+            },
+
+            // 「ページ遷移が行われて、コンポーネントが初期化される前」に呼び出される
+            beforeRouteEnter: function (to, from, next) {
+                console.log('コンポーネント内のフック関数が呼ばれたよ！' + 'from: "' + from.path + '", to: "' + to.path + '"')
+                getUsers((function (err, users) {
+                    if (err) {
+                        this.error = err.toString()
+                    } else {
+                        // nextに渡すcallbackでコンポーネント自身にアクセス可
+                        next(function (vm) { vm.users = users })
+                    }
+                }).bind(this))
+            }
+        }
+```
 
 -------------------
 
 ## 4.4 サンプルアプリケーションの実装
 
+- 実践的なSPAとして、簡易的なユーザー情報登録・閲覧が可能なアプリを構築する
+- アプリの詳細は書籍参照
 - [コード](4.4.0.html)
 - [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.0.html)
 
 ### 4.4.1 リストページの実装
 
+- ユーザー一覧のためのリストページを実装する
+- 本項までの内容で、簡単なページ遷移をするSPAが完成する
 - [コード](./4.4.1.html)
 - [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.1.html)
 
 ### 4.4.2 APIによるデータ通信
 
+- Vue Routerで非同期にデータを取得する場合、Vue.jsのコンポーネントのcreatedとwatchで実装するのが一般的。
+  + watch: 算出プロパティを汎化したVueコンポーネントのオプション。ここでは$routeを監視して変更のたびに処理を呼び出している。これは頻出パターン。
+- Web API経由でデータを取得するところは関数getUserで擬似的に行う。
 - [コード](4.4.2.html)
 - [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.2.html)
 
 ### 4.4.3 詳細ページの実装
 
+- /users/:userIdで詳細ページに遷移できるよう実装する
+- 4.4.2で作成したgetUserを改修する
 - [コード](4.4.3.html)
 - [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.3.html)
 
 ### 4.4.4 ユーザー登録ページの実装
 
+- /users/newにアクセスした時にユーザーの情報を追加できるページを作成する
+- /users/newは/users/:userIdの前に配置する必要がある点に注意。ルーターの解釈は配列の先頭から行われるため
+- ServerへPOSTリクエストを行うところは関数postUserで擬似的に行う
+- ユーザーを追加した後ページをリロードすると、追加したユーザーのデータは消えることが確認できる
 - [コード](4.4.4.html)
 - [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.4.html)
 
 ### 4.4.5 ログイン・ログアウトの実装
 
+- ルート単位のフック関数を使用して、簡易認証機能を実装する。
+- HTML5のローカルストレージを用いて認証状態を保持する。*（ユーザー情報はローカルストレージに保持しないので、リロードして消えるところは変わらない。）*
+- ユーザー登録ページのルート定義でフック関数を使用し、未認証の場合はログインページにリダイレクトするように実装する。
+- v-showを使用して、ログイン状態でログアウトメニュー、ログアウト状態でログインメニューを表示する。
 - [コード](4.4.5.html)
 - [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.4.5.html)
 
 ### 4.4.6 サンプルアプリケーションの全体像
 
+- 前項までの内容と重複するので省略。書籍にはjsfiddleのURLが載っているので、動作確認にはここが使える。
+
 -------------------
 
 ## 4.5 Vue Routerの高度な機能
 
-### モジュールの使い方&同一のミューテーションタイプ
+### RouterインスタンスとRouteオブジェクト
 
-- ストアで管理する情報が増えた場合、ストアを分割することができる。このとき使うのがストアのモジュールオプション。
-- ステートはそれぞれのモジュールで管理され、ミューテーションおよびアクションは同一のタイプが定義できる。この場合にコミットをするとすべてのステートに対してタイプが実行される。
 
-### ネームスペース
+### ネストしたルーティング
 
-- 前節で説明した同一のタイプが一括コミットされるのは便利だが、使い分けしたいこともある。
-- この場合は、モジュールを定義する際にnamespacedオプションをtrueに設定すればよい。
 
-### モジュールのネスト
+### リダイレクト・エイリアス
 
-### ネームスペース付きモジュールから外部へのアクセス
-
--------------------
-
-## SECTION46 その他のストアやオプション
-
-### ストアの状態を監視する
-
-### Strictモードで開発する
-
-### Vuexでホットリロードを使用する
-
--------------------
+### 履歴の管理
