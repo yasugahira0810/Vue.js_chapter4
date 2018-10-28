@@ -243,12 +243,50 @@ router.push({ name: 'user', params: { userId: 456 }})
 
 ## 4.5 Vue Routerの高度な機能
 
-### RouterインスタンスとRouteオブジェクト
+### 4.5.1 RouterインスタンスとRouteオブジェクト
 
+- 4章の中で出てきていた$router, $routeについて解説する。
+  + $router: Routerインスタンス。アプリ全体に対して1つ存在し、全般的なRouter機能を管理する。
+  + $route: Routeオブジェクト。ページ遷移によるルーティングが発生するごとに生成される。現在アクティブなルートの状態を保持したオブジェクトで、現在のパスやURLパラメーターなどの情報を取得できる。
+- それぞれの代表的な機能は書籍参照。
 
-### ネストしたルーティング
+### 4.5.2 ネストしたルーティング
 
+- Vue Routerでは、任意のコンポーネントに対して入れ子となるコンポーネントのルート定義ができる。（ネストされたルート）
+- ここでは例として、ページ内容は/users/:userIdを基本としつつ、/users/:userId/postsのときはポスト情報を、/users/:userId/profileのときはプロフィール情報を表示する例を挙げる。
+- 入れ子部分の設定のため、コンポーネント定義でrouter-view要素、ルート定義でchildrenオプションを使う。
+- [コード](4.5.2.html)
+- [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.5.2.html)
 
-### リダイレクト・エイリアス
+### 4.5.3 リダイレクト・エイリアス
 
-### 履歴の管理
+- 一般的なアプリのリダイレクトに相当するVue Routerの機能として、リダイレクトとエイリアスがある。
+  + リダイレクト: 実行した時にURLを書き換える
+  + エイリアス: URLは書き換えずルーティング処理を実行する
+
+#### リダイレクト
+
+- [コード](4.5.3_redirect.html)
+- [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.5.3_redirect.html)
+
+#### エイリアス
+
+- [コード](4.5.3_alias.html)
+- [動作](https://s3-ap-northeast-1.amazonaws.com/introduction-to-vuejs/4.5.3_alias.html)
+
+### 4.5.4 履歴の管理
+
+- SPAではサーバー側のルーティングを介していないため、ブラウザの戻る・進むボタンを押した時の履歴操作もクライアント側で管理する必要があり、実現方法は「URL Hash」と「HTML5 History API」の２通りがある。
+
+#### URL Hash
+
+- URLの末尾に#/が付与され、ルーティングのパスを管理する
+- デフォルト
+- ブラウザの戻る・進むボタンを押した際には、内部的にhashchangeイベントを使って処理が行われる
+- URL直打ちでも問題ない。
+
+#### HTML5 History API
+
+- #/は付与されず、通常のサーバサイドの遷移と同じ形式になる
+- URL直打ちに対応するためには、サーバ側の設定が必要
+- Vue Routerインスタンス生成時にmodeオプションとして'history'を指定すると切り替えられる

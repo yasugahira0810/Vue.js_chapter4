@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title> Vue.js SPAのサンプルアプリケーション</title>
+<style>
+    /* 任意のCSSを記載、今回は割愛 */
+</style>
+<div id="app">
+    <nav>
+        <!-- router-linkによるナビゲーション定義 -->
+        <router-link to="/top">トップページ</router-link>
+        <router-link to="/users"> ユーザー一覧ページ</router-link>
+        <router-link to="/users/new?redirect=true">新規ユーザー登録</router-link>
+        <router-link to="/login" v-show="!Auth.loggedIn()">ログイン</router-link>
+        <router-link to="/logout" v-show="Auth.loggedIn()">ログアウト</router-link>
+    </nav>
+    <router-view></router-view>
+</div>
+
+<!-- Vue.js本体とVue Routerの読み込み -->
+<script src="https://unpkg.com/vue@2.5.17/dist/vue.min.js"></script>
+<script src="https://unpkg.com/vue-router@3.0.1/dist/vue-router.min.js"></script>
+<!-- ここからを以後書いていく -->
+<!-- 必要な分のコンポーネントのテンプレート定義 -->
+<script type="text/x-template" id="user-list">
+    <div>
+        <div class="loading" v-if="loading">読み込み中...</div >
+        <div v-if="error" class="error">
+            {{ error }}
+        </div>
+        <!-- usersがロードされたら各ユーザーの名前を表示する -->
+        <div v-for="user in users" :key="user.id">
+            <router-link :to="{ path: '/users/' + user.id }">{{ user.name }}</router-link>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-template" id="user-detail">
+    <div>
+        <div class="loading" v-if="loading">読み込み中...</div>
+        <div v-if="error" class="error">
+            {{ error }}
+        </div>
+        <div v-if="user">
+            <h2>{{ user.name }}</h2>
+            <p>{{ user.description }}</p>
+        </div>
+    </div>
+</script>
+
+<!-- ユーザー 作成 ページ の テンプレート -->
+<script type="text/x-template" id="user-create">
+    <div>
+        <div class="sending" v-if="sending">Sending...</div>
+        <div>
+            <h2>新規ユーザー作成</h2>
+            <div>
+                <label>名前:</label>
+                <input type="text" v-model="user.name">
+            </div>
+            <div>
+                <label>説明文: </label>
+                <textarea v-model="user.description"></textarea>
+            </div>
+            <div v-if="error" class="error">
+                {{ error }}
+            </div>
+            <div>
+                <input type="button" @click="createUser" value="送信">
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-template" id="login">
+    <div>
+        <h2>Login</h2>
+        <p v-if="$route.query.redirect">
+            ログインしてください
+        </p>
+        <form @submit.prevent="login">
+            <label><input v-model="email" placeholder="email"></label>
+            <label><input v-model="pass" placeholder="password" type="password"></label>
+            <br>
+            <button type="submit">ログイン</button>
+            <p v-if="error" class="error">ログインに失敗しました</p>
+        </form>
+    </div>
+</script>
+
+
+<script>
+    // // JSONを返す関数
+    // // この関数を用いて擬似的にWeb API経由で情報を取得したようにする
+    // var getUsers = function (callback) {
+    //     setTimeout(function () {
+    //         callback(null, [
+    //             {
+    //                 id: 1,
+    //                 name: 'Takuya Tejima'
+    //             },
+    //             {
+    //                 id: 2,
+    //                 name: 'Yohei Noda'
+    //             }])
+    //     }, 1000)
+    // }
+
+    // 擬似的にAPI経由で情報を取得したようにする
+    var getUsers = function (callback) {
+        setTimeout(function () {
+            callback(null, userData)
+        }, 1000)
+    }
+
+    // UserListを改修
+    var UserList = {
+        // HTML上のscriptタグのidを指定する
+        template: '#user-list',
+        data: function () {
+            return {
+                loading: false,
+                users: function () { return [] }, // 初期値の空配列
+                error: null
+            }
+        },
+
+        // 初期化時にデータを取得する
+        created: function () {
+            this.fetchData()
+        }, // $routeの変更をwatchすることでルーティングが変更された時に再度データを取得
+        watch: {
+            '$route': 'fetchData'
+        },
+        methods: {
+            fetchData: function () {
+                this.loading = true
+                // 取得したデータの結果をusersに格納する
+                // Function.prototype.bindはthisのスコープを渡すために利用
+                getUsers((function (err, users) {
+                    this.loading = false
+                    if (err) {
+                        this.error = err.toString()
+                    } else {
+                        this.users = users
+                    }
+                }).bind(this))
+            }
+        }
+    }
+
+    var userData = [
+        {
+            id: 1,
+            name: 'Takuya Tejima',
+            description: '東南アジア で 働く エンジニア です。'
+        },
+        {
+            id: 2,
+            name: 'Yohei Noda',
+            description: 'アウトドア・フットサルが趣味のエンジニアです。'
+        }
+    ]
+
+    // 擬似的にAPI経由で情報を取得したようにする
+    var getUser = function (userId, callback) {
+        setTimeout(function () {
+            var filteredUsers = userData.filter(function (user) {
+                return user.id === parseInt(userId, 10)
+            })
+            callback(null, filteredUsers && filteredUsers[0])
+        }, 1000)
+    }
+    // 詳細ページのコンポーネント
+    var UserDetail = {
+        template: '#user-detail',
+        // 初期値のセット
+        data: function () {
+            return {
+                loading: false,
+                user: null,
+                error: null
+            }
+        },
+
+        created: function () {
+            this.fetchData()
+        },
+
+        watch: {
+            '$route': 'fetchData'
+        },
+
+        methods: {
+            fetchData: function () {
+                this.loading = true
+                // this.$route.params.userIdに現在のURL上のパラメーターに対応したuserIdが格納される
+                getUser(this.$route.params.userId, (function (err, user) {
+                    this.loading = false
+                    if (err) {
+                        this.error = err.toString()
+                    } else {
+                        this.user = user
+                    }
+                }).bind(this))
+            }
+        }
+    }
+
+    // 擬似的にAPI経由で情報を更新したようにする
+    // 実際のWebアプリケーションではServerへPOSTリクエストを行う
+    var postUser = function (params, callback) {
+        setTimeout(function () {
+            // idは追加されるごとに自動的にincrementされていく
+            params.id = userData.length + 1
+            userData.push(params)
+            callback(null, params)
+        }, 1000)
+    }
+
+    // 新規ユーザー作成コンポーネント
+    var UserCreate = {
+        template: '#user-create',
+        data: function () {
+            return {
+                sending: false,
+                user: this.defaultUser(),
+                error: null
+            }
+        },
+
+        created: function () {
+        },
+
+        methods: {
+            defaultUser: function () {
+                return {
+                    name: '',
+                    description: ''
+                }
+            },
+
+            createUser: function () {
+                // 入力パラメーターのバリデーション
+                if (this.user.name.trim() === '') {
+                    this.error = 'Nameは必須です'
+                    return
+                }
+                if (this.user.description.trim() === '') {
+                    this.error = 'Descriptionは必須です'
+                    return
+                }
+                postUser(this.user, (function (err, user) {
+                    this.sending = false
+                    if (err) {
+                        this.error = err.toString()
+                    } else {
+                        this.error = null
+                        // デフォルトでフォームをリセット
+                        this.user = this.defaultUser()
+                        alert('新規ユーザーが登録されました')
+                        // ユーザー一覧ページに戻る
+                        this.$router.push('/users')
+                    }
+                }).bind(this))
+            }
+        }
+    }
+
+    // ユーザー詳細ページのコンポーネント定義
+    var User = {
+        template: '<div class="user">' + '<h2>ユーザーIDは{{ $route.params.userId }}です。</h2>' +
+            '<router-link :to="\'/users/\' + $route.params.userId + \'/profile\'">ユーザーのプロフィールページを見る</router-link>' +
+            '<router-link :to="\'/users/\' + $route.params.userId + \'/posts\'"> ユーザーの投稿ページを見る</router-link>' +
+            '<router-view></router-view>' +
+            '</div>'
+    }
+    // ユーザー詳細ページ内で部分的に表示されるユーザーのプロフィールページ
+    var UserProfile = {
+        template:
+            '<div class="user-profile">' + '<h3>こちらはユーザー {{ $route.params.userId }} のプロフィールページです。</h3>' + '</div>'
+    }
+
+    // ユーザー詳細ページ内で部分的に表示されるユーザーの投稿ページ
+    var UserPosts = {
+        template:
+            '<div class="user-posts">' + '<h3>こちらはユーザー {{ $route.params.userId }} の投稿ページです。</h3>' + '</div>'
+    }
+
+    var Auth = {
+        login: function (email, pass, cb) {
+            //ダミーデータを使った擬似ログイン
+            setTimeout(function () {
+                if (email === 'vue@example.com' && pass === 'vue') {
+                    // ログイン成功時はローカルストレージにtokenを保存する
+                    localStorage.token = Math.random().toString(36).substring(7)
+                    if (cb) { cb(true) }
+                } else {
+                    if (cb) { cb(false) }
+                }
+            }, 0)
+        },
+
+        logout: function () {
+            delete localStorage.token
+        },
+
+        loggedIn: function () {
+            // ローカルストレージにtokenがあればログイン状態とみなす
+            return !!localStorage.token
+        }
+    }
+
+    var Login = {
+        template: '#login',
+        data: function () {
+            return {
+                email: 'vue@example.com',
+                pass: '',
+                error: false
+            }
+        },
+        methods: {
+            login: function () {
+                Auth.login(this.email, this.pass, (function (loggedIn) {
+                    if (!loggedIn) {
+                        this.error = true
+                    } else {
+                        // redirectパラメーターが付いている場合はそのパスに遷移
+                        this.$router.replace(this.$route.query.redirect || '/')
+                    }
+                }).bind(this))
+            }
+        }
+    }
+
+    var router = new VueRouter({
+        routes: [
+            {
+                path: '/top',
+                component: {
+                    template: '<div>トップページです。</div>'
+                }
+            },
+            {
+                path: '/users',
+                component: UserList
+            },
+            { // ルート定義を追加
+                path: '/users/new',
+                component: UserCreate,
+                beforeEnter: function (to, from, next) {
+                    // 認証されていない状態でアクセスした時はloginページに遷移する
+                    if (!Auth.loggedIn()) {
+                        next({
+                            path: '/login',
+                            query: { redirect: to.fullPath }
+                        })
+                    } else {
+                        // 認証済みであればそのまま新規ユーザー作成ページへ進む
+                        next()
+                    }
+                }
+            },
+            {
+                path: '/users/:userId',
+                name: 'user',
+                component: User,
+                children: [
+                    {
+                        // /user/:userId/profileがマッチした時に
+                        // UserProfileコンポーネントはUserコンポーネントの<router-view>内部でレンダリングされます
+                        path: 'profile',
+                        component: UserProfile
+                    },
+                    {
+                        // /user/:userId/postsがマッチした時に
+                        // UserPostsコンポーネントはUserコンポーネントの<router-view>内部でレンダリングされます
+                        path: 'posts',
+                        component: UserPosts
+                    }
+                ]
+            },
+            {
+                path: '/login',
+                component: Login
+            },
+            {
+                path: '/logout',
+                beforeEnter: function (to, from, next) {
+                    Auth.logout()
+                    next('/')
+                }
+            },
+            {
+                path: '/notfound',
+                component: {
+                    template: '<div>NotFound</div>'
+                }
+            },
+            // 現在のURLが定義したルートのいずれにもマッチしなかった時に/notfoundに遷移する
+            {
+                path: '*',
+                redirect: '/notfound'
+            }
+        ]
+    })
+    var app = new Vue({
+        router: router
+    }).$mount('#app')
+</script>
